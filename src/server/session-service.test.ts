@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { PrismaClient } from "../../app/generated/prisma/client";
+import type { PrismaClient } from "../generated/prisma/client";
 import { sessionExpiryFrom } from "../lib/sessions";
 import { createTestDatabase } from "../test/database";
 import { resolveSession, signOut } from "./session-service";

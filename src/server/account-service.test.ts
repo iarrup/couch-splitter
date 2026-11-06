@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createTestDatabase } from "../test/database";
-import type { PrismaClient } from "../../app/generated/prisma/client";
+import type { PrismaClient } from "../generated/prisma/client";
 import { registerAccount, signIn } from "./account-service";
 
 let testPrisma: PrismaClient | undefined;

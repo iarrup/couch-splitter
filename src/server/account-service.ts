@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { Prisma, type PrismaClient } from "../../app/generated/prisma/client";
+import { Prisma, type PrismaClient } from "../generated/prisma/client";
 import {
   normalizeEmailForUniqueness,
   validatePassword,

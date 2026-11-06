@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { PrismaClient } from "../../app/generated/prisma/client";
+import type { PrismaClient } from "../generated/prisma/client";
 import { isSessionExpired, sessionExpiryFrom } from "../lib/sessions";
 import { prisma } from "./prisma";
 
