@@ -5,18 +5,13 @@ import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-async function accountMigrationPath(): Promise<string> {
+async function migrationPaths(): Promise<string[]> {
   const migrationsDirectory = join(process.cwd(), "prisma", "migrations");
   const entries = await readdir(migrationsDirectory, { withFileTypes: true });
-  const migrationEntry = entries.find(
-    (entry) => entry.isDirectory() && entry.name.endsWith("_001_accounts"),
-  );
-
-  if (!migrationEntry) {
-    throw new Error("The account database migration is missing.");
-  }
-
-  return join(migrationsDirectory, migrationEntry.name, "migration.sql");
+  return Promise.all(entries
+    .filter((entry) => entry.isDirectory())
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .map((entry) => join(migrationsDirectory, entry.name, "migration.sql")));
 }
 
 export async function createTestDatabase(): Promise<{
@@ -27,10 +22,11 @@ export async function createTestDatabase(): Promise<{
   const databasePath = join(temporaryDirectory, "accounts.db");
 
   try {
-    const migrationSql = await readFile(await accountMigrationPath(), "utf8");
     const sqliteDatabase = new Database(databasePath);
     sqliteDatabase.pragma("foreign_keys = ON");
-    sqliteDatabase.exec(migrationSql);
+    for (const path of await migrationPaths()) {
+      sqliteDatabase.exec(await readFile(path, "utf8"));
+    }
     sqliteDatabase.close();
 
     const testPrisma = new PrismaClient({
