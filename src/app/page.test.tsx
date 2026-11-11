@@ -12,13 +12,19 @@ const mocks = vi.hoisted(() => ({
   }),
   resolveSession: vi.fn(),
   findAccount: vi.fn(),
+  listGroups: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({ cookies: mocks.cookies }));
+vi.mock("next/server", async (importOriginal) => ({
+  ...await importOriginal<typeof import("next/server")>(),
+  connection: vi.fn(),
+}));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("../server/session-service", () => ({
   resolveSession: mocks.resolveSession,
 }));
+vi.mock("../server/group-service", () => ({ listGroups: mocks.listGroups }));
 vi.mock("../server/prisma", () => ({
   prisma: { account: { findUnique: mocks.findAccount } },
 }));
@@ -38,13 +44,14 @@ describe("protected landing page", () => {
     });
     mocks.resolveSession.mockResolvedValue({ accountId: "account-1" });
     mocks.findAccount.mockResolvedValue({ displayName: "Morgan" });
+    mocks.listGroups.mockResolvedValue([]);
   });
 
   it("renders the signed-in account and sign-out affordance", async () => {
-    const markup = renderToStaticMarkup(await Home());
+    const markup = renderToStaticMarkup(await Home({ searchParams: Promise.resolve({}) }));
 
     expect(markup).toContain("Welcome, Morgan");
-    expect(markup).toContain("Your groups and expenses are ready when you are.");
+    expect(markup).toContain("You have no groups yet.");
     expect(markup).toContain("Sign out");
     expect(mocks.resolveSession).toHaveBeenCalledWith(
       "session-secret",
@@ -59,14 +66,14 @@ describe("protected landing page", () => {
   it("redirects signed-out visitors to sign in", async () => {
     mocks.cookies.mockResolvedValue({ get: () => undefined });
 
-    await expect(Home()).rejects.toThrow("REDIRECT:/sign-in");
+    await expect(Home({ searchParams: Promise.resolve({}) })).rejects.toThrow("REDIRECT:/sign-in");
     expect(mocks.resolveSession).not.toHaveBeenCalled();
   });
 
   it("redirects when the stored session has expired or been revoked", async () => {
     mocks.resolveSession.mockResolvedValue(null);
 
-    await expect(Home()).rejects.toThrow("REDIRECT:/sign-in");
+    await expect(Home({ searchParams: Promise.resolve({}) })).rejects.toThrow("REDIRECT:/sign-in");
     expect(mocks.findAccount).not.toHaveBeenCalled();
   });
 });

@@ -19,6 +19,8 @@ model Account {
   passwordDigest String
   createdAt      DateTime  @default(now())
   sessions       Session[]
+  createdGroups  Group[]   @relation("GroupCreator")
+  memberships    GroupMember[]
 }
 
 model Session {
@@ -31,4 +33,27 @@ model Session {
 
   @@index([accountId])
   @@index([expiresAt])
+}
+
+model Group {
+  id          String        @id @default(cuid())
+  name        String
+  creatorId   String
+  createdAt   DateTime      @default(now())
+  creator     Account       @relation("GroupCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  members     GroupMember[]
+
+  @@unique([creatorId, name])
+  @@index([creatorId])
+}
+
+model GroupMember {
+  groupId   String
+  accountId String
+  joinedAt  DateTime @default(now())
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, accountId])
+  @@index([accountId])
 }
